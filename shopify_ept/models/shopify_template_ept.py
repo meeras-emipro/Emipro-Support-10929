@@ -653,7 +653,7 @@ class ShopifyProductTemplateEpt(models.Model):
 
         if not odoo_product:
             message = "Unknown error occurred. Couldn't find product %s with sku %s in Odoo." % (
-                shopify_template.title, sku)
+                shopify_template.name, sku)
             return message
 
         shopify_product = self.create_or_update_shopify_variant(variant_vals, False, shopify_template, odoo_product)
@@ -1093,20 +1093,20 @@ class ShopifyProductTemplateEpt(models.Model):
                     [("shopify_instance_id", "=", instance.id), ("exported_in_shopify", "=", False),
                      ('product_id.barcode', '=', barcode)])
                 shopify_product_ids_list.append(shopify_product_ids)
-                if shopify_variant and shopify_variant.product_id and \
+                if duplicate_barcode and shopify_variant and shopify_variant.product_id and \
                         shopify_variant.product_id.id != duplicate_barcode.id:
                     message = "Duplicate barcode(%s) found in Product: %s and ID: %s." % (barcode, template_title,
                                                                                           template_id)
                     return message
-                elif not instance.auto_import_product and not shopify_product_ids and \
-                        instance.shopify_sync_product_with not in ["barcode", "sku_or_barcode"]:
-                    message = "Duplicate barcode(%s) found in Product: %s and ID: %s." % (barcode, template_title,
-                                                                                          template_id)
-                    return message
-                elif instance.auto_import_product and duplicate_barcode:
-                    message = "Duplicate barcode(%s) found in Product: %s and ID: %s." % (barcode, template_title,
-                                                                                          template_id)
-                    return message
+                # elif not instance.auto_import_product and not shopify_product_ids and \
+                #         instance.shopify_sync_product_with not in ["barcode", "sku_or_barcode"]:
+                #     message = "Duplicate barcode(%s) found in Product: %s and ID: %s." % (barcode, template_title,
+                #                                                                           template_id)
+                #     return message
+                # elif instance.auto_import_product and duplicate_barcode:
+                #     message = "Duplicate barcode(%s) found in Product: %s and ID: %s." % (barcode, template_title,
+                #                                                                           template_id)
+                #     return message
 
         total_shopify_sku = len(set(shopify_skus))
         if len(shopify_skus) != total_shopify_sku:

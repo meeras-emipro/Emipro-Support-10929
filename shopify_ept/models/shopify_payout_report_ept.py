@@ -439,7 +439,7 @@ class ShopifyPaymentReportEpt(models.Model):
                                                         x.state == 'posted' and x.move_type == 'out_invoice' and
                                                         x.amount_total == transaction.amount)
             if not invoice_ids:
-                message = "Invoice is not created for order %s in odoo" % \
+                message = "Invoice amount is not matched for order %s in odoo" % \
                           (order_id.name or transaction.source_order_id)
                 log_line = common_log_line_obj.create({'message': message,
                                                        'shopify_payout_report_line_id': transaction.id})
@@ -450,7 +450,7 @@ class ShopifyPaymentReportEpt(models.Model):
                                                         x.state == 'posted' and x.move_type == 'out_refund' and
                                                         x.amount_total == -transaction.amount)
             if not invoice_ids:
-                message = "In Shopify Payout, there is a Refund, but Refund is not created for order %s in" \
+                message = "In Shopify Payout, there is a Refund, but Refund amount is not matched for order %s in" \
                           "odoo" % (order_id.name or transaction.source_order_id)
                 log_line = common_log_line_obj.create({'message': message,
                                                        'shopify_payout_report_line_id': transaction.id})
@@ -543,6 +543,19 @@ class ShopifyPaymentReportEpt(models.Model):
         @param statement_line: Record of bank statement line.
         @author: Maulik Barad on Date 07-Dec-2020.
         """
+        shopify_payout_report_line_obj = self.env['shopify.payout.report.line.ept']
+        sale_order_obj = self.env['sale.order']
+        shopify_payout_report_line_id = shopify_payout_report_line_obj.search(
+            [('transaction_id', '=', statement_line.payment_ref)])
+        sale_order_id = sale_order_obj.search(
+            [('shopify_order_id', '=', shopify_payout_report_line_id.source_order_id),
+             ('shopify_instance_id', '=', self.instance_id.id)], limit=1)
+        if sale_order_id:
+            shopify_payout_report_line_id.write({'order_id': sale_order_id.id})
+            statement_line.write({'sale_order_id': sale_order_id.id})
+            domain, invoice, log_line = self.check_for_invoice_refund(shopify_payout_report_line_id)
+            if invoice and invoice.move_type == "out_refund":
+                statement_line.update({"refund_invoice_id": invoice.id})
         order = statement_line.sale_order_id
         if statement_line.refund_invoice_id:
             invoices = statement_line.refund_invoice_id

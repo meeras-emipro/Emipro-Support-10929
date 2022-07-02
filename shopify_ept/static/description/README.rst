@@ -1,9 +1,8 @@
 =================================================
-
-Connector
+Shopify Odoo Connector
 =================================================
 
-Shopify is a famous cloud-based, multi-channel eCommerce platform designed for small and medium businesses. When a Shopify Seller uses Odoo as their backend ERP, the Shopify Odoo Connector is a must-have product for them. Using this connector, a seller can integrate Shopify Store with Odoo and manage different operations such as publishing products to Shopify, Importing Orders to odoo and much more. Automate all Shopify Odoo Integration operations to save a lot of time and efforts using this connector. Shopify Connector is number 1 download in Odoo App Store.
+Shopify is a famous cloud-based, multi-channel eCommerce platform designed for small and medium businesses. When a Shopify Seller uses Odoo as their backend ERP, the Shopify Odoo Connector is a must-have product for them. Using this connector, a seller can integrate Shopify Store with Odoo and manage different operations such as publishing products to Shopify, Importing Orders to odoo and much more. Automate all Shopify Odoo Integration operations to save a lot of time and efforts using this connector.
 
 
 =================================================

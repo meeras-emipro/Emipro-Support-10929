@@ -445,8 +445,9 @@ class SaleOrder(models.Model):
                     message = "Other"
                 sale_order = self.search_existing_shopify_order(order_data, instance, order_data.get("order_number"))
                 if sale_order and sale_order.state != 'cancel':
-                    sale_order.write({'state': 'cancel', 'canceled_in_shopify': True})
-                    sale_order.message_post(body=_("Shopify store on this order canceled reason for %s", message))
+                    sale_order.write({'canceled_in_shopify': True})
+                    sale_order.message_post(
+                        body=_("The reason for the order cancellation on this Shopify store is that %s.", message))
                     sale_order.cancel_shopify_order()
         instance.last_cancel_order_import_date = to_date - timedelta(days=2)
         return True
@@ -680,6 +681,7 @@ class SaleOrder(models.Model):
             @author: Haresh Mori @Emipro Technologies Pvt. Ltd on date 19 October 2020 .
             Task_id: 167537
         """
+        shopify_source_id = self.find_or_create_shopify_source(order_response.get('source_name'))
         order_vals = {
             "checkout_id": order_response.get("checkout_id"),
             "note": order_response.get("note"),
@@ -692,8 +694,22 @@ class SaleOrder(models.Model):
             "auto_workflow_process_id": workflow and workflow.id,
             "client_order_ref": order_response.get("name"),
             "analytic_account_id": instance.shopify_analytic_account_id.id if instance.shopify_analytic_account_id else False,
+            "source_id": shopify_source_id.id
         }
         return order_vals
+
+    def find_or_create_shopify_source(self, source):
+        """
+        This method is used to find or create shopify source in utm.source.
+        @param source: Shopify order source
+        @author: Meera Sidapara @Emipro Technologies Pvt. Ltd on date 19 April 2022.
+        Task_id: 187155
+        """
+        utm_source_obj = self.env['utm.source']
+        source_id = utm_source_obj.search([('name', '=ilike', source)], limit=1)
+        if not source_id:
+            source_id = utm_source_obj.create({'name': source})
+        return source_id
 
     def shopify_set_pricelist(self, instance, order_response):
         """
@@ -1386,7 +1402,10 @@ class SaleOrder(models.Model):
         @author: Haresh Mori @Emipro Technologies Pvt. Ltd on date 13-Jan-2020..
         """
         if "done" in self.picking_ids.mapped("state"):
-            self.picking_ids.message_post(body=_("%s order is Canceled from Shopify store.", self.shopify_order_number))
+            for picking_id in self.picking_ids:
+                picking_id.write({'updated_in_shopify': True})
+                picking_id.message_post(
+                    body=_("Order %s has been canceled in the Shopify store.", self.shopify_order_number))
             return False
         self.action_cancel()
         self.canceled_in_shopify = True
@@ -1420,7 +1439,7 @@ class SaleOrder(models.Model):
         if self.amount_total == total_refund:
             move_reversal = self.env["account.move.reversal"].with_context(
                 {"active_model": "account.move", "active_ids": invoices.ids}).create(
-                {"refund_method": "cancel", "date": refund_date,
+                {"refund_method": "refund", "date": refund_date,
                  "reason": "Refunded from shopify" if len(refunds_data) > 1 else refunds_data[0].get("note"),
                  "journal_id": invoices.journal_id.id})
             move_reversal.reverse_moves()

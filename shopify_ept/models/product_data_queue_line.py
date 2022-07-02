@@ -169,7 +169,7 @@ class ShopifyProductDataQueueLineEpt(models.Model):
                 continue
             shopify_template.shopify_sync_product_images(template_data)
             product_queue.write({'shopify_image_import_state': 'done'})
-
+            self._cr.commit()
             if time.time() - start_time > image_import_cron_time - 60:
                 return True
 

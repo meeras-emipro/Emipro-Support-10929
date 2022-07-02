@@ -22,6 +22,7 @@ class SaleOrderLine(models.Model):
 
         new_order_line = sale_order_line.new(order_line)
         new_order_line.product_id_change()
+        new_order_line._onchange_product_id_set_customer_lead()
         order_line = sale_order_line._convert_to_write({name: new_order_line[name] for name in new_order_line._cache})
 
         order_line.update({
